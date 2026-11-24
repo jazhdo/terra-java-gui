@@ -1,13 +1,17 @@
 package mc.jazhdo;
 
+import java.awt.Color;
 import java.awt.Frame;
 import java.awt.GraphicsEnvironment;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
+import javax.swing.BoxLayout;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -17,26 +21,54 @@ import javax.swing.JRootPane;
 import javax.swing.KeyStroke;
 import javax.swing.WindowConstants;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Main {
+    private static final Logger logger = LoggerFactory.getLogger(Main.class);
     private static final GraphicsEnvironment device = GraphicsEnvironment.getLocalGraphicsEnvironment();
-    private static final JFrame screen = new JFrame("Java GUI Things");
-    private static final JRootPane root = screen.getRootPane();
+    private static final JFrame frame = new JFrame("Java GUI Things");
+    private static final JRootPane root = frame.getRootPane();
+    static {
+        frame.setSize(400, 300);
+        frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        frame.setLocation(device.getCenterPoint());
+        root.setLayout(new BoxLayout(root, BoxLayout.Y_AXIS));
+    }
 
     public static void main(String[] args) {
-        screen.setSize(400, 300);
-        screen.setExtendedState(Frame.MAXIMIZED_BOTH);
-        screen.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+        logger.info("Initializing...");
 
         initInputs();
 
         JButton testButton = new JButton("Test");
+        testButton.setSize(80, 30);
+        testButton.setOpaque(true);
+        testButton.setBorderPainted(false);
+        // testButton.setContentAreaFilled(false);
+        // testButton.setFocusPainted(false);
         testButton.addActionListener((event) -> {
             JOptionPane.showMessageDialog(testButton, "TEST SUCCESS");
         });
-        screen.add(testButton);
+        testButton.addMouseListener(new MouseAdapter() {
+            @Override 
+            public void mouseEntered(MouseEvent e) {
+                logger.info("Mouse entered");
+                testButton.setBackground(new Color(0xDD, 0xDD, 0xDD));
+                testButton.repaint();
+            }
+            @Override 
+            public void mouseExited(MouseEvent e) {
+                logger.info("Mouse exited");
+                testButton.setBackground(new Color(0xEE, 0xEE, 0xEE));
+                testButton.repaint();
+            }
+        });
+        root.add(testButton);
         
-        screen.setLocation(device.getCenterPoint());
-        screen.setVisible(true);
+        frame.setVisible(true);
+        logger.info("Initialization finished.");
     }
 
     private static void initInputs() {
@@ -50,7 +82,7 @@ public class Main {
         actions.put("exit", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                screen.dispose();
+                frame.dispose();
             }
         });
     }
