@@ -36,9 +36,7 @@ public class DVD extends Program {
         Main.contentPane.setLayout(null);
 
         Timer loop = new Timer(10, new ActionListener() {
-            Dimension initialScreenSize = Main.contentPane.getSize();
-            private int x = (int) (initialScreenSize.getWidth() / 2), y = (int) (initialScreenSize.getHeight() / 2);
-            private int vx = 1, vy = 1;
+            private int x = 0, y = 0, vx = 1, vy = 1;
         
             @Override
             public void actionPerformed(ActionEvent e) {

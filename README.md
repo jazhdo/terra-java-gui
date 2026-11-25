@@ -1,6 +1,24 @@
 # Java GUI
 
-> This is a small collection of fun things created using a java gui
+> This is a small collection of programs created using the javax.swing GUI library.
+
+## Requirements
+
+- 1080p display
+- A computer running either Linux, MacOS, or Windows
+- A mouse and a keyboard
+
+## Purpose
+
+> 
+
+## How to Play
+
+1. Go to the releases page
+
+## How it was made
+
+> 
 
 ## Credits
 

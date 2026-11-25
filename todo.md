@@ -1,0 +1,1 @@
+- Compile using jpackage into .dmg, .exe, and AppImage (for mac, windows, & linux)

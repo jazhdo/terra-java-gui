@@ -14,9 +14,12 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Map;
-import java.util.Map.Entry;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
 import java.util.prefs.Preferences;
 
 import javax.swing.AbstractAction;
@@ -42,10 +45,20 @@ import mc.jazhdo.programs.DVD;
 import mc.jazhdo.programs.Todo;
 
 public class Main {
+    private static final List<String> programs = List.of("DVD Screensaver", "Todo List", "Pomodoro Timer");
+
     public static final Logger logger = LoggerFactory.getLogger(Main.class);
-    private static final Map<String, String> programs = Map.of("dvd", "DVD Screensaver", "todo", "Todo List");
     public static final Preferences prefs = Preferences.userNodeForPackage(Main.class);
     public static final ClassLoader resources = Main.class.getClassLoader();
+    public static final Path appDirectory = Paths.get(System.getProperty("user.home"), ".jazhdo-terra-week-6-java-gui");
+    static {
+        try {
+            Files.createDirectories(appDirectory);
+        } catch (IOException ex) {
+            logger.error("Failed to create the app directory. Shutting down... Error: {}", ex.getMessage());
+            System.exit(500);
+        }
+    }
 
     public static final Toolkit toolkit = Toolkit.getDefaultToolkit();
     public static final GraphicsEnvironment device = GraphicsEnvironment.getLocalGraphicsEnvironment();
@@ -78,7 +91,6 @@ public class Main {
         
         glassPane.setVisible(true);
         frame.setVisible(true);
-        glassPane.setVisible(true);
 
         logger.info("Initialization finished.");
     }
@@ -86,13 +98,12 @@ public class Main {
     private static void openMenu() {
         contentPane.setLayout(new GridBagLayout());
 
-        MouseAdapter resetFocus = new MouseAdapter() {
+        contentPane.addMouseListener(new MouseAdapter() {
             @Override 
             public void mousePressed(MouseEvent e) {
                 root.requestFocusInWindow();
             }
-        };
-        contentPane.addMouseListener(resetFocus);
+        });
 
         JRoundPanel list = new JRoundPanel(50, false);
         list.setBorder(BorderFactory.createEmptyBorder(35, 35, 35, 35));
@@ -104,11 +115,11 @@ public class Main {
         title.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
         list.add(title);
 
-        for (Entry<String, String> entry : programs.entrySet()) {
-            JButton button = new JButton(entry.getValue());
+        for (String programName : programs) {
+            JButton button = new JButton(programName);
             button.addActionListener((event) -> {
-                openPage(entry.getKey());
-                logger.info("Opening page: {}", entry.getKey());
+                openPage(programName);
+                logger.info("Opening page: {}", programName);
             });
             list.add(button);
         }
@@ -123,15 +134,19 @@ public class Main {
 
     private static void openPage(String pageName) {
         // Get and validate program
-        Class<? extends Program> clazz = switch (pageName) {
-            case "dvd" -> DVD.class;
-            case "todo" -> Todo.class;
-            default -> Program.class;
+        Class<? extends Program> clazz = switch (programs.indexOf(pageName)) {
+            case 0 -> DVD.class;
+            case 1 -> Todo.class;
+            case -1 -> {
+                JOptionPane.showMessageDialog(root, "Error: Program " + pageName + " is invalid.");
+                yield Program.class;
+            }
+            default -> {
+                JOptionPane.showMessageDialog(root, "Error: Program " + pageName + " has not yet been created.");
+                yield Program.class;
+            }
         };
-        if (clazz == Program.class) {
-            JOptionPane.showMessageDialog(root, "Error: Program " + pageName + " has not yet been created.");
-            return;
-        }
+        if (clazz == Program.class) return;
 
         // Setup
         frame.setExtendedState(Frame.MAXIMIZED_BOTH);
@@ -146,8 +161,8 @@ public class Main {
             return;
         }
 
-        frame.repaint();
         program.start();
+        frame.repaint();
     }
 
     private static void initInputs() {
@@ -164,5 +179,9 @@ public class Main {
                 frame.dispose();
             }
         });
+    }
+
+    public static byte[] getResource(String filename) throws IOException {
+        return resources.getResourceAsStream(filename).readAllBytes();
     }
 }
