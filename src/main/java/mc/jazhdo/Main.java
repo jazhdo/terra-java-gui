@@ -4,7 +4,6 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Container;
 import java.awt.Font;
-import java.awt.Frame;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagLayout;
 import java.awt.Point;
@@ -34,6 +33,7 @@ import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JRootPane;
 import javax.swing.KeyStroke;
+import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.WindowConstants;
@@ -148,10 +148,6 @@ public class Main {
         };
         if (clazz == Program.class) return;
 
-        // Setup
-        frame.setExtendedState(Frame.MAXIMIZED_BOTH);
-        clearScreen();
-
         Program program;
         try {
             program = clazz.getDeclaredConstructor().newInstance();
@@ -161,8 +157,16 @@ public class Main {
             return;
         }
 
-        program.start();
-        frame.repaint();
+        SwingUtilities.invokeLater(() -> {
+            // Setup
+            // frame.setExtendedState(Frame.MAXIMIZED_BOTH);
+            frame.setBounds(device.getMaximumWindowBounds());
+            clearScreen();
+
+            program.start();
+            frame.revalidate();
+            frame.repaint();
+        });
     }
 
     private static void initInputs() {
@@ -182,6 +186,10 @@ public class Main {
     }
 
     public static byte[] getResource(String filename) throws IOException {
-        return resources.getResourceAsStream(filename).readAllBytes();
+        try {
+            return resources.getResourceAsStream(filename).readAllBytes();
+        } catch (NullPointerException ex) {
+            throw new IOException(ex);
+        }
     }
 }
