@@ -2,6 +2,8 @@ package mc.jazhdo.programs;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
+import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.sql.PreparedStatement;
@@ -31,21 +33,21 @@ public class Todo extends Program {
 
     @Override
     public void start() {
-        // main.setSize(500, Main.contentPane.getHeight());
-        Main.logger.info("Height: {}", Main.contentPane.getHeight());
-        main.setBackground(Color.getHSBColor(0.0f, 0.0f, 0.50f));
-        main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
+        Main.contentPane.setLayout(new BoxLayout(Main.contentPane, BoxLayout.Y_AXIS));
 
-        tasksContainer.setLayout(new BoxLayout(tasksContainer, BoxLayout.Y_AXIS));
-        tasksContainer.setBackground(Color.BLACK);
-        // tasksContainer.setPreferredSize(new Dimension(main.getWidth(), main.getHeight() - 250));
+        main.setBackground(Color.getHSBColor(0.0f, 0.0f, 0.70f));
+        main.setLayout(new BorderLayout());
+        main.setMaximumSize(new Dimension(500, Integer.MAX_VALUE));
+        main.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JPanel header = new JPanel();
-        header.setLayout(new BoxLayout(header, BoxLayout.X_AXIS));
-        // header.setPreferredSize(new Dimension(main.getWidth(), 80));
+        header.setLayout(new BorderLayout());
+        header.setOpaque(true);
+        header.setBackground(Color.CYAN);
 
         JLabel title = new JLabel("Todo List");
         title.setFont(title.getFont().deriveFont(60f));
+        header.add(title, BorderLayout.LINE_START);
 
         ImageIcon settingsIcon;
         try {
@@ -56,7 +58,6 @@ public class Todo extends Program {
             System.exit(500);
             return;
         }
-
         JButton settingsButton = new JButton(settingsIcon);
         settingsButton.addActionListener(new AbstractAction() {
             @Override
@@ -64,6 +65,12 @@ public class Todo extends Program {
                 // TODO: Open Settings
             }
         });
+        header.add(settingsButton, BorderLayout.LINE_END);
+
+        tasksContainer.setLayout(new BorderLayout());
+        tasksContainer.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        tasksContainer.setOpaque(false);
+        tasksContainer.setBackground(Color.BLACK);
 
         // Init tables
         try (Statement s = DB.get().createStatement()) {
@@ -73,11 +80,11 @@ public class Todo extends Program {
             return;
         }
 
-        header.add(title);
-        header.add(settingsButton);
-        main.add(header, BorderLayout.NORTH);
+        main.add(header, BorderLayout.PAGE_START);
         main.add(tasksContainer, BorderLayout.CENTER);
+        // Main.contentPane.add(Box.createHorizontalGlue());
         Main.contentPane.add(main);
+        // Main.contentPane.add(Box.createHorizontalGlue());
 
         loadTasks();
     }
@@ -86,21 +93,28 @@ public class Todo extends Program {
         try (PreparedStatement ps = DB.get().prepareStatement("SELECT * FROM tasks")) {
             ResultSet results = ps.executeQuery();
             while (results.next()) {
-                createTask(Color.getHSBColor(results.getInt("color") / 100, 1.0f, 1.0f), results.getString("content"));
+                createTask(Color.getHSBColor(results.getInt("color") / 100, 0.65f, 0.94f), results.getString("content"), results.getInt("done") == 1);
             }
         } catch (SQLException ex) {
             Main.logger.info("There was an error getting tasks from the tasks table. Error: {}", ex.getMessage());
         }
     }
 
-    private void createTask(Color bgColor, String content) {
+    private void createTask(Color bgColor, String content, boolean checked) {
         JRoundPanel bg = new JRoundPanel(50);
         bg.setLayout(new BoxLayout(bg, BoxLayout.X_AXIS));
         bg.setBackground(bgColor);
         bg.setBorder(BorderFactory.createEmptyBorder(50, 50, 50, 50));
+        bg.setMaximumSize(new Dimension(500, 100));
 
         JCheckBox check = new JCheckBox();
-        // check.setPreferredSize(new Dimension(250, 250));
+        check.setSelected(checked);
+        check.addActionListener(new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // TODO add this
+            }
+        });
 
         JTextArea contents = new JTextArea(content);
         contents.setBackground(bgColor);
