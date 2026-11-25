@@ -1,2 +1,4 @@
 # Compiled jar files
 target/
+
+dependency-reduced-pom.xml

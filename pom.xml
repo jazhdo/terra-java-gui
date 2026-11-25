@@ -15,6 +15,7 @@
     </properties>
 
     <dependencies>
+        <!-- Logger -->
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
