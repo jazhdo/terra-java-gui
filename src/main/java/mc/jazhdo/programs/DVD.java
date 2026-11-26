@@ -22,7 +22,7 @@ public class DVD extends Program {
     public void start() {
         ImageIcon image;
         try {
-            image = new ImageIcon(Main.resources.getResourceAsStream("DVD_logo.png").readAllBytes());
+            image = Main.getIconResource("DVD_logo.png");
         } catch (IOException ex) {
             logger.error("An error occurred while loading the DVD logo image: {}", ex.getMessage());
             JOptionPane.showMessageDialog(Main.frame, "Error: Loading the DVD logo failed.");

@@ -6,6 +6,7 @@ import java.awt.Container;
 import java.awt.Font;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagLayout;
+import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
@@ -25,6 +26,7 @@ import javax.swing.AbstractAction;
 import javax.swing.ActionMap;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
+import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -49,6 +51,8 @@ public class Main {
 
     public static final Logger logger = LoggerFactory.getLogger(Main.class);
     public static final Preferences prefs = Preferences.userNodeForPackage(Main.class);
+    public static final Color transparent = new Color(0x00ffffff, true);
+    public static final DB db = new DB();
     public static final ClassLoader resources = Main.class.getClassLoader();
     public static final Path appDirectory = Paths.get(System.getProperty("user.home"), ".jazhdo-terra-week-6-java-gui");
     static {
@@ -78,21 +82,22 @@ public class Main {
 
     public static void main(String[] args) {
         logger.info("Initializing...");
+        SwingUtilities.invokeLater(() -> {
+            initInputs();
 
-        initInputs();
+            try {
+                UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+            } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
+                logger.error("There was an error setting the default system look & feel: {}", ex.getMessage());
+            }
 
-        try {
-            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
-        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
-            logger.error("There was an error getting the default system look & feel: {}", ex.getMessage());
-        }
+            openMenu();
 
-        openMenu();
-        
-        glassPane.setVisible(true);
-        frame.setVisible(true);
+            glassPane.setVisible(true);
+            frame.setVisible(true);
 
-        logger.info("Initialization finished.");
+            logger.info("Initialization finished.");
+        });
     }
 
     private static void openMenu() {
@@ -157,16 +162,14 @@ public class Main {
             return;
         }
 
-        SwingUtilities.invokeLater(() -> {
-            // Setup
-            // frame.setExtendedState(Frame.MAXIMIZED_BOTH);
-            frame.setBounds(device.getMaximumWindowBounds());
-            clearScreen();
+        frame.setBounds(device.getMaximumWindowBounds());
+        clearScreen();
+        root.requestFocusInWindow();
 
-            program.start();
-            frame.revalidate();
-            frame.repaint();
-        });
+        program.start();
+
+        frame.revalidate();
+        frame.repaint();
     }
 
     private static void initInputs() {
@@ -191,5 +194,11 @@ public class Main {
         } catch (NullPointerException ex) {
             throw new IOException(ex);
         }
+    }
+    public static ImageIcon getIconResource(String filename) throws IOException {
+        return new ImageIcon(getResource(filename));
+    }
+    public static ImageIcon getScaledIconResource(String filename, int width, int height) throws IOException {
+        return new ImageIcon(getIconResource(filename).getImage().getScaledInstance(width, height, Image.SCALE_SMOOTH));
     }
 }
