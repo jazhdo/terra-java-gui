@@ -9,16 +9,19 @@ import java.awt.GridBagLayout;
 import java.awt.Image;
 import java.awt.Point;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.prefs.Preferences;
 
@@ -48,6 +51,7 @@ import mc.jazhdo.programs.Todo;
 
 public class Main {
     private static final List<String> programs = List.of("DVD Screensaver", "Todo List", "Pomodoro Timer");
+    public static final List<String> openPrograms = new ArrayList<>();
 
     public static final Logger logger = LoggerFactory.getLogger(Main.class);
     public static final Preferences prefs = Preferences.userNodeForPackage(Main.class);
@@ -67,24 +71,9 @@ public class Main {
     public static final Toolkit toolkit = Toolkit.getDefaultToolkit();
     public static final GraphicsEnvironment device = GraphicsEnvironment.getLocalGraphicsEnvironment();
 
-    public static final JFrame frame = new JFrame("Java GUI Programs");
-    public static final JRootPane root = frame.getRootPane();
-    public static final Container contentPane = root.getContentPane();
-    public static final Component glassPane = root.getGlassPane();
-    static {
-        frame.setSize(400, 300);
-        frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-        Point center = device.getCenterPoint();
-        center.x -= 200;
-        center.y -= 150;
-        frame.setLocation(center);
-    }
-
     public static void main(String[] args) {
         logger.info("Initializing...");
         SwingUtilities.invokeLater(() -> {
-            initInputs();
-
             try {
                 UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             } catch (ClassNotFoundException | InstantiationException | IllegalAccessException | UnsupportedLookAndFeelException ex) {
@@ -93,14 +82,33 @@ public class Main {
 
             openMenu();
 
-            glassPane.setVisible(true);
-            frame.setVisible(true);
-
             logger.info("Initialization finished.");
         });
     }
 
+    private static void close(JFrame frame) {
+        frame.dispose();
+        System.exit(0);
+    }
+
+    public static void onClose(Window window, Runnable runnable) {
+        window.addWindowListener(new WindowAdapter() {
+            @Override 
+            public void windowClosing(WindowEvent e) {
+                runnable.run();
+            }
+        });
+    }
+
     private static void openMenu() {
+        JFrame frame = newWindow("Java GUI Programs", 400, 300, false);
+        onClose(frame, () -> close(frame));
+        JRootPane root = frame.getRootPane();
+        Container contentPane = root.getContentPane();
+        Component glassPane = root.getGlassPane();
+
+        addCtrlOrCmdKeyPlusWCloseKey(frame, root, () -> close(frame));
+
         contentPane.setLayout(new GridBagLayout());
 
         contentPane.addMouseListener(new MouseAdapter() {
@@ -123,22 +131,25 @@ public class Main {
         for (String programName : programs) {
             JButton button = new JButton(programName);
             button.addActionListener((event) -> {
-                openPage(programName);
+                openPage(frame, programName);
                 logger.info("Opening page: {}", programName);
             });
             list.add(button);
         }
 
         contentPane.add(list);
+        glassPane.setVisible(true);
+        frame.setVisible(true);
     }
 
-    private static void clearScreen() {
-        contentPane.removeAll();
-        for (MouseListener listener : contentPane.getMouseListeners()) contentPane.removeMouseListener(listener);
-    }
+    private static void openPage(JFrame frame, String pageName) {
+        JRootPane root = frame.getRootPane();
 
-    private static void openPage(String pageName) {
         // Get and validate program
+        if (openPrograms.contains(pageName)) {
+            JOptionPane.showMessageDialog(root, "You can only have one window of a program open.");
+            return;
+        }
         Class<? extends Program> clazz = switch (programs.indexOf(pageName)) {
             case 0 -> DVD.class;
             case 1 -> Todo.class;
@@ -156,25 +167,19 @@ public class Main {
         Program program;
         try {
             program = clazz.getDeclaredConstructor().newInstance();
+            openPrograms.add(pageName);
         } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException ex) {
             logger.error("There was an error instantiating the program {}. Error: {}", new Object[]{pageName, ex.getMessage()});
             JOptionPane.showMessageDialog(root, "Error: Program " + pageName + " cannot be instantiated.");
             return;
         }
 
-        frame.setBounds(device.getMaximumWindowBounds());
-        clearScreen();
-        root.requestFocusInWindow();
-
         program.start();
-
-        frame.revalidate();
-        frame.repaint();
     }
 
-    private static void initInputs() {
-        InputMap inputs = root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        ActionMap actions = root.getActionMap();
+    public static void addCtrlOrCmdKeyPlusWCloseKey(Window window, JComponent component, Runnable onclose) {
+        InputMap inputs = component.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+        ActionMap actions = component.getActionMap();
 
         // Inputs
         inputs.put(KeyStroke.getKeyStroke(KeyEvent.VK_W, toolkit.getMenuShortcutKeyMaskEx()), "exit");
@@ -183,9 +188,24 @@ public class Main {
         actions.put("exit", new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                frame.dispose();
+                onclose.run();
             }
         });
+    }
+
+    public static JFrame newWindow(String title, int width, int height) {
+        return newWindow(title, width, height, true);
+    }
+    public static JFrame newWindow(String title, int width, int height, boolean resizable) {
+        JFrame frame = new JFrame(title);
+        frame.setSize(width, height);
+        frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+        frame.setResizable(resizable);
+        Point center = device.getCenterPoint();
+        center.x -= width / 2;
+        center.y -= height / 2;
+        frame.setLocation(center);
+        return frame;
     }
 
     public static byte[] getResource(String filename) throws IOException {

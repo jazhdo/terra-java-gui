@@ -10,7 +10,7 @@ import java.util.concurrent.Executors;
 public class DB {
     private Connection conn;
     private final ExecutorService executor = Executors.newSingleThreadExecutor((r) -> {
-        Thread t = new Thread("jazhdo-db");
+        Thread t = new Thread(r, "jazhdo-db");
         t.setDaemon(true);
         return t;
     });
