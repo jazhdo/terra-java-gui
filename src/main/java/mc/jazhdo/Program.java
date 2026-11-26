@@ -21,7 +21,7 @@ public abstract class Program {
 
     public void close() {
         wrapUp();
-        Main.openPrograms.remove(name);
+        Main.openPrograms.remove(this);
         frame.dispose();
     }
 }

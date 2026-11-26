@@ -15,6 +15,12 @@
 ## How to Play
 
 1. Go to the releases page
+2. Download the executable for your OS
+3. Double click the executable
+4. You're in!
+    > For the DVD screensaver, right click anywhere on the screen to open settings.
+
+    > 
 
 ## How it was made
 
