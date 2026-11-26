@@ -51,11 +51,11 @@ import mc.jazhdo.programs.Todo;
 
 public class Main {
     private static final List<String> programs = List.of("DVD Screensaver", "Todo List", "Pomodoro Timer");
-    public static final List<String> openPrograms = new ArrayList<>();
+    public static final List<Program> openPrograms = new ArrayList<>();
 
     public static final Logger logger = LoggerFactory.getLogger(Main.class);
     public static final Preferences prefs = Preferences.userNodeForPackage(Main.class);
-    public static final Color transparent = new Color(0x00ffffff, true);
+    public static final Color TRANSPARENT = new Color(0x00ffffff, true);
     public static final DB db = new DB();
     public static final ClassLoader resources = Main.class.getClassLoader();
     public static final Path appDirectory = Paths.get(System.getProperty("user.home"), ".jazhdo-terra-week-6-java-gui");
@@ -88,6 +88,7 @@ public class Main {
 
     private static void close(JFrame frame) {
         frame.dispose();
+
         System.exit(0);
     }
 
@@ -102,15 +103,14 @@ public class Main {
 
     private static void openMenu() {
         JFrame frame = newWindow("Java GUI Programs", 400, 300, false);
-        onClose(frame, () -> close(frame));
         JRootPane root = frame.getRootPane();
         Container contentPane = root.getContentPane();
         Component glassPane = root.getGlassPane();
 
+        onClose(frame, () -> close(frame));
         addCtrlOrCmdKeyPlusWCloseKey(frame, root, () -> close(frame));
 
         contentPane.setLayout(new GridBagLayout());
-
         contentPane.addMouseListener(new MouseAdapter() {
             @Override 
             public void mousePressed(MouseEvent e) {
@@ -146,10 +146,7 @@ public class Main {
         JRootPane root = frame.getRootPane();
 
         // Get and validate program
-        if (openPrograms.contains(pageName)) {
-            JOptionPane.showMessageDialog(root, "You can only have one window of a program open.");
-            return;
-        }
+
         Class<? extends Program> clazz = switch (programs.indexOf(pageName)) {
             case 0 -> DVD.class;
             case 1 -> Todo.class;
@@ -163,18 +160,18 @@ public class Main {
             }
         };
         if (clazz == Program.class) return;
-
-        Program program;
-        try {
-            program = clazz.getDeclaredConstructor().newInstance();
-            openPrograms.add(pageName);
-        } catch (NoSuchMethodException | InstantiationException | IllegalAccessException | InvocationTargetException ex) {
-            logger.error("There was an error instantiating the program {}. Error: {}", new Object[]{pageName, ex.getMessage()});
-            JOptionPane.showMessageDialog(root, "Error: Program " + pageName + " cannot be instantiated.");
+        if (!openPrograms.stream().filter(program -> program.getClass() == clazz).toList().isEmpty()) {
+            JOptionPane.showMessageDialog(root, "You can only have one window of a program open.");
             return;
         }
 
-        program.start();
+        try {
+            openPrograms.add((Program) clazz.getConstructors()[0].newInstance(pageName));
+        } catch (InstantiationException | IllegalAccessException | InvocationTargetException ex) {
+            ex.printStackTrace();
+            logger.error("There was an error instantiating the program {}. Error: {}", new Object[]{pageName, ex.getMessage()});
+            JOptionPane.showMessageDialog(root, "Error: Program " + pageName + " cannot be instantiated.");
+        }
     }
 
     public static void addCtrlOrCmdKeyPlusWCloseKey(Window window, JComponent component, Runnable onclose) {

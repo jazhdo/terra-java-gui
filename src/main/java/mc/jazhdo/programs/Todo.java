@@ -29,7 +29,6 @@ import javax.swing.ImageIcon;
 import javax.swing.InputMap;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
@@ -44,11 +43,18 @@ import mc.jazhdo.Main;
 import mc.jazhdo.Program;
 
 public class Todo extends Program {
-    private static final ImageIcon uncheckedIcon, checkedIcon;
-    private static final JFrame frame = Main.newWindow("Todo List", 800, 800);
-    private static final JRootPane root = frame.getRootPane();
-    private static final Container contentPane = frame.getContentPane();
-    static {
+    private ImageIcon uncheckedIcon, checkedIcon;
+    private final JRootPane root;
+    private final Container contentPane;
+    private final JPanel main = new JPanel(), tasksContainer = new JPanel();
+    private final JScrollPane tasksScroll = new JScrollPane(tasksContainer);
+
+    public Todo(String name) {
+        super(name);
+
+        root = frame.getRootPane();
+        contentPane = frame.getContentPane();
+
         try {
             uncheckedIcon = Main.getScaledIconResource("unchecked.png", 32, 32);
             checkedIcon = Main.getScaledIconResource("checked.png", 32, 32);
@@ -57,21 +63,8 @@ public class Todo extends Program {
             JOptionPane.showMessageDialog(root, "Error: Getting the checkbox images failed.");
             throw new ExceptionInInitializerError(ex);
         }
-    }
-    private final JPanel main = new JPanel(), tasksContainer = new JPanel();
-    private final JScrollPane tasksScroll = new JScrollPane(tasksContainer);
 
-    private void close(JFrame frame) {
-        Main.openPrograms.remove("Todo List");
-        frame.dispose();
-    }
-
-    @Override
-    public void start() {
         frame.setMinimumSize(new Dimension(360, 180));
-
-        Main.onClose(frame, () -> close(frame));
-        Main.addCtrlOrCmdKeyPlusWCloseKey(frame, root, () -> close(frame));
 
         contentPane.setLayout(new BoxLayout(contentPane, BoxLayout.Y_AXIS));
 
@@ -90,7 +83,7 @@ public class Todo extends Program {
         header.setBackground(Color.CYAN);
         header.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
 
-        JLabel title = new JLabel("Todo List");
+        JLabel title = new JLabel(name);
         title.setFont(title.getFont().deriveFont(60f));
         header.add(title, BorderLayout.LINE_START);
 
@@ -155,6 +148,15 @@ public class Todo extends Program {
         });
     }
 
+    @Override
+    public Dimension getSize() {
+        return new Dimension(800, 800);
+    }
+
+    @Override 
+    public void wrapUp() {
+    }
+
     private void createTask(float bgColor, String content, boolean checked) {
         JRoundPanel bg = new JRoundPanel(60);
         bg.setLayout(new BoxLayout(bg, BoxLayout.X_AXIS));
@@ -170,7 +172,7 @@ public class Todo extends Program {
         bg.setMinimumSize(new Dimension(0, 60));
         bg.setFocusable(true);
         bg.setOpaque(false);
-        bg.setBorder(BorderFactory.createLineBorder(Main.transparent, 2, true));
+        bg.setBorder(BorderFactory.createLineBorder(Main.TRANSPARENT, 2, true));
         bg.addFocusListener(new FocusAdapter() {
             @Override 
             public void focusGained(FocusEvent e) {
@@ -180,7 +182,7 @@ public class Todo extends Program {
 
             @Override 
             public void focusLost(FocusEvent e) {
-                bg.setBorder(BorderFactory.createLineBorder(Main.transparent, 2, true));
+                bg.setBorder(BorderFactory.createLineBorder(Main.TRANSPARENT, 2, true));
             }
         });
         InputMap focusedInputs = bg.getInputMap(JComponent.WHEN_FOCUSED);
@@ -236,8 +238,4 @@ public class Todo extends Program {
     // private String point2String(Point input) {
     //     return "(x: " + Double.toString(input.getX()) + ", y: " + Double.toString(input.getY()) + ")";
     // }
-
-    private void initSettings() {
-        // TODO: Create settings
-    }
 }
